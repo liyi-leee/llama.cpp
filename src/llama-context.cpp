@@ -1361,6 +1361,16 @@ void llama_context::output_reorder() {
 // graph
 //
 
+ggml_cgraph * llama_context::graph_reserve_get() {
+    auto * res = gf_res_reserve.get();
+    return res->gf;
+}
+
+ggml_cgraph * llama_context::graph_prev_get() {
+    auto * res = gf_res_prev.get();
+    return res->gf;
+}
+
 uint32_t llama_context::graph_max_nodes() const {
     return std::max<uint32_t>(1024u, 8u*model.n_tensors());
 }
