@@ -1,0 +1,147 @@
+// GGML CGraph FlatBuffer Schema
+// This schema defines a serializable representation of ggml_cgraph
+// that packs all tensor data into a continuous buffer
+
+namespace GGML.Serialization;
+
+// Tensor data type enum
+enum TensorType : ubyte {
+    F32 = 0,
+    F16 = 1,
+    Q4_0 = 2,
+    Q4_1 = 3,
+    Q5_0 = 6,
+    Q5_1 = 7,
+    Q8_0 = 8,
+    Q8_1 = 9,
+    Q2_K = 10,
+    Q3_K = 11,
+    Q4_K = 12,
+    Q5_K = 13,
+    Q6_K = 14,
+    Q8_K = 15,
+    IQ2_XXS = 16,
+    IQ2_XS = 17,
+    IQ3_XXS = 18,
+    IQ1_S = 19,
+    IQ4_NL = 20,
+    IQ3_S = 21,
+    IQ2_S = 22,
+    IQ4_XS = 23,
+    I8 = 24,
+    I16 = 25,
+    I32 = 26,
+    I64 = 27,
+    F64 = 28,
+    IQ1_M = 29,
+    BF16 = 30,
+    Q4_0_4_4 = 31,
+    Q4_0_4_8 = 32,
+    Q4_0_8_8 = 33,
+    TQ1_0 = 34,
+    TQ2_0 = 35
+}
+
+// Tensor operation enum (simplified, only common ones)
+enum TensorOp : ubyte {
+    NONE = 0,
+    ADD = 1,
+    SUB = 2,
+    MUL = 3,
+    DIV = 4,
+    MUL_MAT = 5,
+    ROPE = 6,
+    NORM = 7,
+    SOFT_MAX = 8,
+    RESHAPE = 9,
+    VIEW = 10,
+    PERMUTE = 11,
+    TRANSPOSE = 12,
+    CONV_1D = 13,
+    CONV_2D = 14,
+    POOL_1D = 15,
+    POOL_2D = 16,
+    GELU = 17,
+    SILU = 18,
+    RELU = 19,
+    // Add more operations as needed
+    CUSTOM = 255
+}
+
+// Fixed-size arrays for tensor dimensions and strides
+struct TensorDimensions {
+    ne0: int64;
+    ne1: int64;
+    ne2: int64;
+    ne3: int64;
+}
+
+struct TensorStrides {
+    nb0: uint64;
+    nb1: uint64;
+    nb2: uint64;
+    nb3: uint64;
+}
+
+// Serialized tensor structure
+table SerializedTensor {
+    type: TensorType;
+    ne: TensorDimensions;        // dimensions (up to 4D)
+    nb: TensorStrides;           // strides in bytes
+    op: TensorOp;
+    op_params: [int32];   // operation parameters
+    flags: int32;
+    
+    // Source tensor references (indices into tensors array)
+    src: [uint32];        // source tensor indices
+    
+    // View information
+    view_src: uint32 = 0; // source tensor index for views (0 = no view)
+    view_offs: uint64;    // view offset
+    
+    // Data location in continuous buffer
+    data_offset: uint64;  // offset in the continuous data buffer
+    data_size: uint64;    // size of data in bytes
+    
+    name: string;         // tensor name
+}
+
+// Hash set for visited tensors during graph traversal
+table HashSet {
+    size: uint64;
+    used_bits: [ubyte];   // bitset for used slots
+    keys: [uint32];       // tensor indices (keys)
+}
+
+// Graph evaluation order
+enum GraphEvalOrder : ubyte {
+    LEFT_TO_RIGHT = 0,
+    RIGHT_TO_LEFT = 1
+}
+
+// Serialized computation graph
+table SerializedCGraph {
+    size: int32;                    // maximum number of nodes/leafs/grads/grad_accs
+    n_nodes: int32;                 // number of nodes currently in use
+    n_leafs: int32;                 // number of leafs currently in use
+    
+    // All tensors (nodes, grads, grad_accs, leafs) in one array
+    tensors: [SerializedTensor];
+    
+    // Indices into tensors array
+    node_indices: [uint32];         // indices of node tensors
+    grad_indices: [uint32];         // indices of gradient tensors
+    grad_acc_indices: [uint32];     // indices of gradient accumulator tensors
+    leaf_indices: [uint32];         // indices of leaf tensors
+    
+    use_counts: [int32];            // usage counts indexed by hash table slot
+    
+    visited_hash_set: HashSet;      // hash set for visited tensors
+    
+    order: GraphEvalOrder;          // evaluation order
+    
+    // Continuous data buffer containing all tensor data
+    data_buffer: [ubyte];           // all tensor data packed consecutively
+}
+
+root_type SerializedCGraph;

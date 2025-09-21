@@ -10,6 +10,8 @@
 #include "llama-model.h"
 #include "llama-context.h"
 
+#include "cgraph_generated.h"
+
 #include <cstdio>
 #include <cstring>
 #include <ctime>
@@ -87,6 +89,87 @@ static void sigint_handler(int signo) {
 }
 #endif
 
+void convert_to_flat_cgraph(const struct ggml_cgraph * graph) {
+   flatbuffers::FlatBufferBuilder builder(1024);
+
+    // 1. 先建最底层的 struct (TensorDimensions, TensorStrides)
+    GGML::Serialization::TensorDimensions dims(4, 8, 0, 0);   // 4x8 张量
+    GGML::Serialization::TensorStrides strides(4, 32, 0, 0);  // 简单填充
+
+    // 2. 可选的 vector / string
+    std::vector<int32_t> op_params_vec = {1, 2, 3};
+    auto op_params = builder.CreateVector(op_params_vec);
+
+    std::vector<uint32_t> src_vec = {0, 1};
+    auto src = builder.CreateVector(src_vec);
+
+    auto name = builder.CreateString("my_tensor");
+
+    // 3. 建一个 SerializedTensor
+    auto tensor = CreateSerializedTensor(
+        builder,
+        GGML::Serialization::TensorType_F32,      // type
+        &dims,               // TensorDimensions struct 指针
+        &strides,            // TensorStrides struct 指针
+        GGML::Serialization::TensorOp_ADD,        // op
+        op_params,           // op_params
+        0,                   // flags
+        src,                 // src
+        0,                   // view_src
+        0,                   // view_offs
+        0,                   // data_offset
+        0,                   // data_size
+        name                 // name
+    );
+
+    // 4. 建一个 tensor 向量
+    std::vector<flatbuffers::Offset<GGML::Serialization::SerializedTensor>> tensor_vec = {tensor};
+    auto tensors = builder.CreateVector(tensor_vec);
+
+    // 5. 其他辅助数据
+    auto node_indices = builder.CreateVector<uint32_t>({0});
+    auto grad_indices = builder.CreateVector<uint32_t>({});
+    auto grad_acc_indices = builder.CreateVector<uint32_t>({});
+    auto leaf_indices = builder.CreateVector<uint32_t>({});
+    auto use_counts = builder.CreateVector<int32_t>({});
+    auto data_buffer = builder.CreateVector<uint8_t>({});
+
+    // HashSet (optional)
+    auto visited_hash_set = GGML::Serialization::CreateHashSetDirect(
+        builder,
+        0,       // size
+        nullptr, // used_bits
+        nullptr  // keys
+    );
+
+    // 6. 最外层 SerializedCGraph
+    auto cgraph = GGML::Serialization::CreateSerializedCGraph(
+        builder,
+        /* size */ 1,
+        /* n_nodes */ 1,
+        /* n_leafs */ 0,
+        tensors,
+        node_indices,
+        grad_indices,
+        grad_acc_indices,
+        leaf_indices,
+        use_counts,
+        visited_hash_set,
+        GGML::Serialization::GraphEvalOrder_LEFT_TO_RIGHT,
+        data_buffer
+    );
+
+    builder.Finish(cgraph);
+
+    // 得到序列化数据指针
+    uint8_t* buf = builder.GetBufferPointer();
+    size_t size = builder.GetSize();
+
+    printf("%p, %ld\n", buf, size);
+    // 现在 buf,size 就是序列化的 FlatBuffer
+    return;
+}
+
 int main(int argc, char ** argv) {
     common_params params;
     g_params = &params;
@@ -159,6 +242,8 @@ int main(int argc, char ** argv) {
     ggml_graph_print(ctx->graph_prev_get());
 
     ggml_graph_print(ctx->graph_reserve_get());
+
+    convert_to_flat_cgraph(ctx->graph_reserve_get());
 
     auto * mem = llama_get_memory(ctx);
 
