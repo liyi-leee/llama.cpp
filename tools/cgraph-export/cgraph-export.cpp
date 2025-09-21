@@ -10,6 +10,7 @@
 #include "llama-model.h"
 #include "llama-context.h"
 
+#include "ggml-impl.h"
 #include "cgraph_generated.h"
 
 #include <cstdio>
@@ -20,6 +21,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include <inttypes.h>
 
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
 #include <signal.h>
@@ -242,6 +245,29 @@ int main(int argc, char ** argv) {
     ggml_graph_print(ctx->graph_prev_get());
 
     ggml_graph_print(ctx->graph_reserve_get());
+
+    auto * cgraph = ctx->graph_reserve_get();
+    printf("n_nodes = %d\n", cgraph->n_nodes);
+    for (int i = 0; i < cgraph->n_nodes; i++) {
+        struct ggml_tensor * node = cgraph->nodes[i];
+
+        printf(" - %3d: [ %5" PRId64 ", %5" PRId64 ", %5" PRId64 "] %16s %s\n",
+                i,
+                node->ne[0], node->ne[1], node->ne[2],
+                ggml_op_name(node->op), (node->flags & GGML_TENSOR_FLAG_PARAM) ? "x" :
+                      ggml_graph_get_grad(cgraph, node) ? "g" : " ");
+    }
+
+    printf("n_leafs = %d\n", cgraph->n_leafs);
+    for (int i = 0; i < cgraph->n_leafs; i++) {
+        struct ggml_tensor * node = cgraph->leafs[i];
+
+        printf(" - %3d: [ %5" PRId64 ", %5" PRId64 "] %8s %16s\n",
+                i,
+                node->ne[0], node->ne[1],
+                ggml_op_name(node->op),
+                ggml_get_name(node));
+    }
 
     convert_to_flat_cgraph(ctx->graph_reserve_get());
 
