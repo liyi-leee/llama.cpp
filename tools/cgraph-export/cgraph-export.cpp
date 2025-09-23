@@ -174,6 +174,15 @@ SerializationResult serialize_cgraph_to_flatbuffer(const struct ggml_cgraph * cg
     // 收集所有唯一的张量 (nodes + leafs)
     std::vector<struct ggml_tensor*> all_tensors;
     
+    // 添加所有计算节点
+    for (int i = 0; i < cgraph->n_nodes; i++) {
+        struct ggml_tensor * tensor = cgraph->nodes[i];
+        if (tensor_index_map.find(tensor) == tensor_index_map.end()) {
+            tensor_index_map[tensor] = all_tensors.size();
+            all_tensors.push_back(tensor);
+        }
+    }
+
     // 添加所有叶子节点
     for (int i = 0; i < cgraph->n_leafs; i++) {
         struct ggml_tensor * tensor = cgraph->leafs[i];
@@ -183,14 +192,6 @@ SerializationResult serialize_cgraph_to_flatbuffer(const struct ggml_cgraph * cg
         }
     }
     
-    // 添加所有计算节点
-    for (int i = 0; i < cgraph->n_nodes; i++) {
-        struct ggml_tensor * tensor = cgraph->nodes[i];
-        if (tensor_index_map.find(tensor) == tensor_index_map.end()) {
-            tensor_index_map[tensor] = all_tensors.size();
-            all_tensors.push_back(tensor);
-        }
-    }
 
     // 收集所有张量数据到独立的连续缓冲区（不受FlatBuffer限制）
     std::vector<uint8_t> continuous_data_buffer;
@@ -378,7 +379,26 @@ SerializationResult serialize_cgraph_to_flatbuffer(const struct ggml_cgraph * cg
 
 void convert_to_flat_cgraph(const struct ggml_cgraph * cgraph) {
     auto result = serialize_cgraph_to_flatbuffer(cgraph);
-    // 这里可以将数据写入文件或进行其他处理
+    // 写入元数据到文件
+    std::ofstream meta_out("cgraph_metadata.bin", std::ios::binary);
+    if (meta_out.is_open()) {
+        meta_out.write(reinterpret_cast<const char*>(result.metadata_buffer.get()), result.metadata_size);
+        meta_out.close();
+        printf("Metadata written to cgraph_metadata.bin (%zu bytes)\n", result.metadata_size);
+    } else {
+        printf("Failed to open cgraph_metadata.bin for writing!\n");
+    }
+
+    // 写入数据到文件
+    std::ofstream data_out("cgraph_data.bin", std::ios::binary);
+    if (data_out.is_open()) {
+        data_out.write(reinterpret_cast<const char*>(result.data_buffer.get()), result.data_size);
+        data_out.close();
+        printf("Data written to cgraph_data.bin (%zu bytes)\n", result.data_size);
+    } else {
+        printf("Failed to open cgraph_data.bin for writing!\n");
+    }
+
     printf("Serialization completed:\n");
     printf("  Metadata size: %zu bytes\n", result.metadata_size);
     printf("  Data size: %zu bytes\n", result.data_size);
@@ -436,18 +456,18 @@ void test_cgraph_serialization(const struct ggml_cgraph * original_cgraph) {
     std::unordered_map<struct ggml_tensor*, uint32_t> tensor_index_map;
     std::vector<struct ggml_tensor*> all_tensors;
     
-    // 添加所有叶子节点
-    for (int i = 0; i < original_cgraph->n_leafs; i++) {
-        struct ggml_tensor * tensor = original_cgraph->leafs[i];
+    // 添加所有计算节点
+    for (int i = 0; i < original_cgraph->n_nodes; i++) {
+        struct ggml_tensor * tensor = original_cgraph->nodes[i];
         if (tensor_index_map.find(tensor) == tensor_index_map.end()) {
             tensor_index_map[tensor] = all_tensors.size();
             all_tensors.push_back(tensor);
         }
     }
-    
-    // 添加所有计算节点
-    for (int i = 0; i < original_cgraph->n_nodes; i++) {
-        struct ggml_tensor * tensor = original_cgraph->nodes[i];
+
+    // 添加所有叶子节点
+    for (int i = 0; i < original_cgraph->n_leafs; i++) {
+        struct ggml_tensor * tensor = original_cgraph->leafs[i];
         if (tensor_index_map.find(tensor) == tensor_index_map.end()) {
             tensor_index_map[tensor] = all_tensors.size();
             all_tensors.push_back(tensor);
@@ -711,19 +731,15 @@ int main(int argc, char ** argv) {
         return 1;
     }
 
-    llama_batch_allocr balloc(model->hparams.n_pos_per_embd());
-    llama_ubatch ubatch = balloc.ubatch_reserve(1, 1);
-
-    //printf("%p\n", ctx->graph_reserve_get());
-
     // ggml_graph_print(ctx->graph_prev_get());
-
     // ggml_graph_print(ctx->graph_reserve_get());
 
     convert_to_flat_cgraph(ctx->graph_reserve_get());
     
     // 测试完整的序列化/反序列化流程
     test_cgraph_serialization(ctx->graph_reserve_get());
+
+    return 0;
 
     auto * mem = llama_get_memory(ctx);
 

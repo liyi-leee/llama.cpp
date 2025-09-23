@@ -1,6 +1,8 @@
 set(TARGET cgraph-export)
-include_directories(/home/leee/dataflow/serialization/thirdparty/flatbuffers/include)
-link_directories(/home/leee/dataflow/serialization/thirdparty/flatbuffers)
+get_filename_component(CMAKE_PARENT_DIR ${CMAKE_SOURCE_DIR} DIRECTORY)
+
+include_directories(${CMAKE_PARENT_DIR}/flatbuffers/include)
+link_directories(${CMAKE_PARENT_DIR}/flatbuffers)
 add_executable(${TARGET} cgraph-export.cpp)
 target_link_libraries(${TARGET} PRIVATE common llama ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(${TARGET} PRIVATE flatbuffers)
