@@ -16,6 +16,7 @@ if (EMSCRIPTEN)
 else()
     add_subdirectory(batched-bench)
     add_subdirectory(cgraph-export) # new tool
+    add_subdirectory(create-model) # new tool
     add_subdirectory(gguf-split)
     add_subdirectory(imatrix)
     add_subdirectory(llama-bench)
