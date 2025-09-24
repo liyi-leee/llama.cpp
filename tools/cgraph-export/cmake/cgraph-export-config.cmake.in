@@ -1,0 +1,24 @@
+set(CGRAPH_EXPORT_SHARED_LIB   @BUILD_SHARED_LIBS@)
+
+@PACKAGE_INIT@
+
+set_and_check(CGRAPH_EXPORT_INCLUDE_DIR "@PACKAGE_CGRAPH_EXPORT_INCLUDE_INSTALL_DIR@")
+set_and_check(CGRAPH_EXPORT_LIB_DIR     "@PACKAGE_CGRAPH_EXPORT_LIB_INSTALL_DIR@")
+
+## Transitive dependency (for static linkers). Not strictly required for shared.
+#find_package(flatbuffers CONFIG REQUIRED)
+
+# Library
+find_library(cgraph_export_LIBRARY cgraph-export
+    REQUIRED
+    HINTS ${CGRAPH_EXPORT_LIB_DIR}
+    NO_CMAKE_FIND_ROOT_PATH
+)
+
+add_library(cgraph-export UNKNOWN IMPORTED)
+set_target_properties(cgraph-export PROPERTIES
+    IMPORTED_LOCATION "${cgraph_export_LIBRARY}"
+    INTERFACE_INCLUDE_DIRECTORIES "${CGRAPH_EXPORT_INCLUDE_DIR}"
+    IMPORTED_LINK_INTERFACE_LANGUAGES "CXX"
+    POSITION_INDEPENDENT_CODE ON
+)
