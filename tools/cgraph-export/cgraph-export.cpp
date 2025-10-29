@@ -30,24 +30,99 @@ GGML::Serialization::TensorType convert_ggml_type(enum ggml_type type) {
 // Helper function to convert ggml_op to TensorOp
 GGML::Serialization::TensorOp convert_ggml_op(enum ggml_op op) {
     switch (op) {
+        case GGML_OP_NONE: return GGML::Serialization::TensorOp_NONE;
+        case GGML_OP_DUP: return GGML::Serialization::TensorOp_DUP;
         case GGML_OP_ADD: return GGML::Serialization::TensorOp_ADD;
+        case GGML_OP_ADD_ID: return GGML::Serialization::TensorOp_ADD_ID;
+        case GGML_OP_ADD1: return GGML::Serialization::TensorOp_ADD1;
+        case GGML_OP_ACC: return GGML::Serialization::TensorOp_ACC;
         case GGML_OP_SUB: return GGML::Serialization::TensorOp_SUB;
         case GGML_OP_MUL: return GGML::Serialization::TensorOp_MUL;
         case GGML_OP_DIV: return GGML::Serialization::TensorOp_DIV;
-        case GGML_OP_MUL_MAT: return GGML::Serialization::TensorOp_MUL_MAT;
-        case GGML_OP_ROPE: return GGML::Serialization::TensorOp_ROPE;
+        case GGML_OP_SQR: return GGML::Serialization::TensorOp_SQR;
+        case GGML_OP_SQRT: return GGML::Serialization::TensorOp_SQRT;
+        case GGML_OP_LOG: return GGML::Serialization::TensorOp_LOG;
+        case GGML_OP_SIN: return GGML::Serialization::TensorOp_SIN;
+        case GGML_OP_COS: return GGML::Serialization::TensorOp_COS;
+        case GGML_OP_SUM: return GGML::Serialization::TensorOp_SUM;
+        case GGML_OP_SUM_ROWS: return GGML::Serialization::TensorOp_SUM_ROWS;
+        case GGML_OP_MEAN: return GGML::Serialization::TensorOp_MEAN;
+        case GGML_OP_ARGMAX: return GGML::Serialization::TensorOp_ARGMAX;
+        case GGML_OP_COUNT_EQUAL: return GGML::Serialization::TensorOp_COUNT_EQUAL;
+        case GGML_OP_REPEAT: return GGML::Serialization::TensorOp_REPEAT;
+        case GGML_OP_REPEAT_BACK: return GGML::Serialization::TensorOp_REPEAT_BACK;
+        case GGML_OP_CONCAT: return GGML::Serialization::TensorOp_CONCAT;
+        case GGML_OP_SILU_BACK: return GGML::Serialization::TensorOp_SILU_BACK;
         case GGML_OP_NORM: return GGML::Serialization::TensorOp_NORM;
-        case GGML_OP_SOFT_MAX: return GGML::Serialization::TensorOp_SOFT_MAX;
+        case GGML_OP_RMS_NORM: return GGML::Serialization::TensorOp_RMS_NORM;
+        case GGML_OP_RMS_NORM_BACK: return GGML::Serialization::TensorOp_RMS_NORM_BACK;
+        case GGML_OP_GROUP_NORM: return GGML::Serialization::TensorOp_GROUP_NORM;
+        case GGML_OP_L2_NORM: return GGML::Serialization::TensorOp_L2_NORM;
+        case GGML_OP_MUL_MAT: return GGML::Serialization::TensorOp_MUL_MAT;
+        case GGML_OP_MUL_MAT_ID: return GGML::Serialization::TensorOp_MUL_MAT_ID;
+        case GGML_OP_OUT_PROD: return GGML::Serialization::TensorOp_OUT_PROD;
+        case GGML_OP_SCALE: return GGML::Serialization::TensorOp_SCALE;
+        case GGML_OP_SET: return GGML::Serialization::TensorOp_SET;
+        case GGML_OP_CPY: return GGML::Serialization::TensorOp_CPY;
+        case GGML_OP_CONT: return GGML::Serialization::TensorOp_CONT;
         case GGML_OP_RESHAPE: return GGML::Serialization::TensorOp_RESHAPE;
         case GGML_OP_VIEW: return GGML::Serialization::TensorOp_VIEW;
         case GGML_OP_PERMUTE: return GGML::Serialization::TensorOp_PERMUTE;
         case GGML_OP_TRANSPOSE: return GGML::Serialization::TensorOp_TRANSPOSE;
+        case GGML_OP_GET_ROWS: return GGML::Serialization::TensorOp_GET_ROWS;
+        case GGML_OP_GET_ROWS_BACK: return GGML::Serialization::TensorOp_GET_ROWS_BACK;
+        case GGML_OP_SET_ROWS: return GGML::Serialization::TensorOp_SET_ROWS;
+        case GGML_OP_DIAG: return GGML::Serialization::TensorOp_DIAG;
+        case GGML_OP_DIAG_MASK_INF: return GGML::Serialization::TensorOp_DIAG_MASK_INF;
+        case GGML_OP_DIAG_MASK_ZERO: return GGML::Serialization::TensorOp_DIAG_MASK_ZERO;
+        case GGML_OP_SOFT_MAX: return GGML::Serialization::TensorOp_SOFT_MAX;
+        case GGML_OP_SOFT_MAX_BACK: return GGML::Serialization::TensorOp_SOFT_MAX_BACK;
+        case GGML_OP_ROPE: return GGML::Serialization::TensorOp_ROPE;
+        case GGML_OP_ROPE_BACK: return GGML::Serialization::TensorOp_ROPE_BACK;
+        case GGML_OP_CLAMP: return GGML::Serialization::TensorOp_CLAMP;
+        case GGML_OP_CONV_TRANSPOSE_1D: return GGML::Serialization::TensorOp_CONV_TRANSPOSE_1D;
+        case GGML_OP_IM2COL: return GGML::Serialization::TensorOp_IM2COL;
+        case GGML_OP_IM2COL_BACK: return GGML::Serialization::TensorOp_IM2COL_BACK;
+        case GGML_OP_IM2COL_3D: return GGML::Serialization::TensorOp_IM2COL_3D;
         case GGML_OP_CONV_2D: return GGML::Serialization::TensorOp_CONV_2D;
+        case GGML_OP_CONV_3D: return GGML::Serialization::TensorOp_CONV_3D;
+        case GGML_OP_CONV_2D_DW: return GGML::Serialization::TensorOp_CONV_2D_DW;
+        case GGML_OP_CONV_TRANSPOSE_2D: return GGML::Serialization::TensorOp_CONV_TRANSPOSE_2D;
         case GGML_OP_POOL_1D: return GGML::Serialization::TensorOp_POOL_1D;
         case GGML_OP_POOL_2D: return GGML::Serialization::TensorOp_POOL_2D;
-        // For unary operations, we'll use specific cases when available
-        case GGML_OP_UNARY: return GGML::Serialization::TensorOp_CUSTOM; // Handle unary ops specially
-        default: return GGML::Serialization::TensorOp_CUSTOM;
+        case GGML_OP_POOL_2D_BACK: return GGML::Serialization::TensorOp_POOL_2D_BACK;
+        case GGML_OP_UPSCALE: return GGML::Serialization::TensorOp_UPSCALE;
+        case GGML_OP_PAD: return GGML::Serialization::TensorOp_PAD;
+        case GGML_OP_PAD_REFLECT_1D: return GGML::Serialization::TensorOp_PAD_REFLECT_1D;
+        case GGML_OP_ROLL: return GGML::Serialization::TensorOp_ROLL;
+        case GGML_OP_ARANGE: return GGML::Serialization::TensorOp_ARANGE;
+        case GGML_OP_TIMESTEP_EMBEDDING: return GGML::Serialization::TensorOp_TIMESTEP_EMBEDDING;
+        case GGML_OP_ARGSORT: return GGML::Serialization::TensorOp_ARGSORT;
+        case GGML_OP_LEAKY_RELU: return GGML::Serialization::TensorOp_LEAKY_RELU;
+        case GGML_OP_FLASH_ATTN_EXT: return GGML::Serialization::TensorOp_FLASH_ATTN_EXT;
+        case GGML_OP_FLASH_ATTN_BACK: return GGML::Serialization::TensorOp_FLASH_ATTN_BACK;
+        case GGML_OP_SSM_CONV: return GGML::Serialization::TensorOp_SSM_CONV;
+        case GGML_OP_SSM_SCAN: return GGML::Serialization::TensorOp_SSM_SCAN;
+        case GGML_OP_WIN_PART: return GGML::Serialization::TensorOp_WIN_PART;
+        case GGML_OP_WIN_UNPART: return GGML::Serialization::TensorOp_WIN_UNPART;
+        case GGML_OP_GET_REL_POS: return GGML::Serialization::TensorOp_GET_REL_POS;
+        case GGML_OP_ADD_REL_POS: return GGML::Serialization::TensorOp_ADD_REL_POS;
+        case GGML_OP_RWKV_WKV6: return GGML::Serialization::TensorOp_RWKV_WKV6;
+        case GGML_OP_GATED_LINEAR_ATTN: return GGML::Serialization::TensorOp_GATED_LINEAR_ATTN;
+        case GGML_OP_RWKV_WKV7: return GGML::Serialization::TensorOp_RWKV_WKV7;
+        case GGML_OP_UNARY: return GGML::Serialization::TensorOp_UNARY;
+        case GGML_OP_MAP_CUSTOM1: return GGML::Serialization::TensorOp_MAP_CUSTOM1;
+        case GGML_OP_MAP_CUSTOM2: return GGML::Serialization::TensorOp_MAP_CUSTOM2;
+        case GGML_OP_MAP_CUSTOM3: return GGML::Serialization::TensorOp_MAP_CUSTOM3;
+        case GGML_OP_CUSTOM: return GGML::Serialization::TensorOp_CUSTOM;
+        case GGML_OP_CROSS_ENTROPY_LOSS: return GGML::Serialization::TensorOp_CROSS_ENTROPY_LOSS;
+        case GGML_OP_CROSS_ENTROPY_LOSS_BACK: return GGML::Serialization::TensorOp_CROSS_ENTROPY_LOSS_BACK;
+        case GGML_OP_OPT_STEP_ADAMW: return GGML::Serialization::TensorOp_OPT_STEP_ADAMW;
+        case GGML_OP_OPT_STEP_SGD: return GGML::Serialization::TensorOp_OPT_STEP_SGD;
+        case GGML_OP_GLU: return GGML::Serialization::TensorOp_GLU;
+        default: 
+            // 对于未知或新增的操作，返回CUSTOM
+            return GGML::Serialization::TensorOp_CUSTOM;
     }
 }
 
